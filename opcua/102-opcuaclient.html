@@ -25,6 +25,7 @@ limitations under the License.
             action: {value: "read", required: true},
             deadbandtype: {value: "a"},
             deadbandvalue: {value: 1},
+            datachangetrigger: {value: ""},
             time: {value: 10},
             timeUnit: {value: "s"},
             // These are fixed or can be read through endPoint
@@ -62,6 +63,7 @@ limitations under the License.
                 var inputAction = $('#node-input-action');
                 var inputTime = $('#node-input-timerow');
                 var inputDeadband = $('#node-input-deadband');
+                var inputDataChangeTrigger = $('#node-input-datachangetriggerrow');
                 change_time_input(); // first to fit config now
                 inputAction.change(change_time_input);
 
@@ -81,6 +83,12 @@ limitations under the License.
                 }
                 else {
                     inputDeadband.hide();
+                }
+                if (inputAction.val() == "subscribe") {
+                    inputDataChangeTrigger.show();
+                }
+                else {
+                    inputDataChangeTrigger.hide();
                 }
 
             }
@@ -129,6 +137,15 @@ limitations under the License.
             <option value="s">second(s)</option>
             <option value="m">minute(s)</option>
             <option value="h">hour(s)</option>
+        </select>
+    </div>
+    <div class="form-row" id="node-input-datachangetriggerrow">
+        <label for="node-input-datachangetrigger"><i class="icon-tasks"></i> Notify on</label>
+        <select id="node-input-datachangetrigger" style="width:72%;">
+            <option value="">Server default (status or value change)</option>
+            <option value="Status">Status change</option>
+            <option value="StatusValue">Status or value change</option>
+            <option value="StatusValueTimestamp">Status, value or timestamp change</option>
         </select>
     </div>
     <div class="form-row" id="node-input-deadband">
@@ -247,6 +264,10 @@ limitations under the License.
     <p>The value to Write should be injected by an OpcUa-Item.</p>
     <p>Inject the Topic on Subscribe or Event for subscription and you got the changing value on every Interval.</p>
     <p>Injecting the same Topic again is ignored: an already subscribed topic does not create a duplicate monitored item.</p>
+    <p><strong>Notify on</strong> (subscribe only) sets the DataChangeTrigger of the monitored items: status change, status or value change,
+        or status, value or timestamp change. With <em>Status, value or timestamp change</em> writing the same value again is reported as well.
+        Default is the server default (status or value change). <strong>msg.dataChangeTrigger</strong>
+        (<code>Status</code> | <code>StatusValue</code> | <code>StatusValueTimestamp</code>) overrides the setting per subscribed topic.</p>
     <p>If the server connection is lost (for example the PLC is powered off) the node detects it within about a minute,
         shows the status "reconnect" and keeps retrying until the server is reachable again.
         All previously subscribed topics are subscribed automatically again - no flow action needed.</p>

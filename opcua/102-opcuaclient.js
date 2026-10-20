@@ -48,6 +48,7 @@ module.exports = function (RED) {
     this.timeUnit = n.timeUnit;
     this.deadbandtype = n.deadbandtype;
     this.deadbandvalue = n.deadbandvalue;
+    this.datachangetrigger = n.datachangetrigger || ""; // "" = server default (StatusValue)
     this.certificate = n.certificate; // n == NONE, l == Local file, e == Endpoint, u == Upload
     this.localfile = n.localfile; // Local certificate file
     this.localkeyfile = n.localkeyfile; // Local private key file
@@ -2218,6 +2219,20 @@ module.exports = function (RED) {
       return n;
     }
 
+    // DataChangeFilter of a subscribed item: msg.dataChangeTrigger or the node setting
+    // ("Status" | "StatusValue" | "StatusValueTimestamp"); none = server default (StatusValue)
+    function get_data_change_filter(msg) {
+      const trigger = msg.dataChangeTrigger || node.datachangetrigger;
+      if (!trigger) {
+        return undefined;
+      }
+      if (opcua.DataChangeTrigger[trigger] === undefined) {
+        node_error("Unknown dataChangeTrigger: " + trigger + ", using server default");
+        return undefined;
+      }
+      return new opcua.DataChangeFilter({ trigger: opcua.DataChangeTrigger[trigger], deadbandType: opcua.DeadbandType.None });
+    }
+
     async function subscribe_monitoredItem(subscription, msg) {
       verbose_log("Session subscriptionId: " + subscription.subscriptionId);
 
@@ -2317,7 +2332,8 @@ module.exports = function (RED) {
           }, {
             samplingInterval: interval,
             queueSize: queueSize,
-            discardOldest: true
+            discardOldest: true,
+            filter: get_data_change_filter(msg)
           },
             TimestampsToReturn.Both, // Other valid values: Source | Server | Neither | Both
           );
