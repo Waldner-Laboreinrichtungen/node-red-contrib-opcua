@@ -41,6 +41,8 @@ limitations under the License.
             sendBufferSize: {value: 8192, required: false},
             setstatusandtime: {value: false, required: true},
             keepsessionalive: {value: false, required: true},
+            queueuntilconnected: {value: false},
+            reconnectinterval: {value: 15, validate: RED.validators.number()},
             name: {value: ""},
             applicationName: {value: "", required: false},
             applicationUri: {value: "", required: false}
@@ -207,6 +209,14 @@ limitations under the License.
         <label for="node-input-keepsessionalive" style="width:72%;"><i class="icon-tasks"></i> Keep session alive</label>
         <input type="checkbox" id="node-input-keepsessionalive" style="width:20%">
     </div>
+    <div class="form-row">
+        <label for="node-input-queueuntilconnected" style="width:72%;"><i class="icon-tasks"></i> Keep messages until connected</label>
+        <input type="checkbox" id="node-input-queueuntilconnected" style="width:20%">
+    </div>
+    <div class="form-row">
+        <label for="node-input-reconnectinterval"><i class="icon-time"></i> Reconnect (s)</label>
+        <input type="number" id="node-input-reconnectinterval" placeholder="15" style="max-width:120px">
+    </div>
 
     <div class="form-row">
         <label for="node-input-name"><i class="icon-tasks"></i> Name</label>
@@ -271,6 +281,12 @@ limitations under the License.
     <p>If the server connection is lost (for example the PLC is powered off) the node detects it within about a minute,
         shows the status "reconnect" and keeps retrying until the server is reachable again.
         All previously subscribed topics are subscribed automatically again - no flow action needed.</p>
+    <p><strong>Keep messages until connected</strong>: messages that arrive while the client has no session are kept
+        and processed as soon as the session exists, also if the server is not reachable yet (e.g. status "invalid endpoint").
+        Only the latest message per action and topic is kept. This allows e.g. to subscribe once with an Inject node on start,
+        even if Node-RED starts before the server. Default: off (messages are only kept while connecting).</p>
+    <p><strong>Reconnect (s)</strong>: interval of the liveness check, which reconnects endlessly while the server is not
+        reachable (default: 15 s).</p>
     <p>Interval is setting for Client <strong>requestedPublishingInterval</strong> (default: 100ms).</p>
     <p>Input <strong>msg.payload</strong> can bring an samplingInterval for monitored Items/Events in subscription (default: 100ms).</p>
     <p>Monitor will ask additional parameters like Absolute or Percent and deadband value</p>

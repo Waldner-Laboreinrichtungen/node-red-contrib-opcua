@@ -59,6 +59,8 @@ module.exports = function (RED) {
     this.sendBufferSize = n.sendBufferSize;
     this.setstatusandtime = n.setstatusandtime;
     this.keepsessionalive = n.keepsessionalive;
+    this.queueuntilconnected = n.queueuntilconnected === true; // keep msgs until the session exists, in every not connected state
+    this.reconnectinterval = parseInt(n.reconnectinterval) > 0 ? parseInt(n.reconnectinterval) : 15; // seconds, liveness check / reconnect
     this.applicationName = n.applicationName;
     this.applicationUri = n.applicationUri;
     let node = this;
@@ -235,7 +237,7 @@ module.exports = function (RED) {
     function start_liveness_watchdog() {
       if (livenessTimer) clearInterval(livenessTimer);
       livenessFails = 0;
-      livenessTimer = setInterval(liveness_check, 15 * 1000);
+      livenessTimer = setInterval(liveness_check, node.reconnectinterval * 1000);
     }
 
     function stop_liveness_watchdog() {
@@ -814,7 +816,12 @@ module.exports = function (RED) {
         // Added statuses when msg must be put to queue
         // Added statuses when msg must be put to queue
         const statuses = ['', 'create client', 'connecting', 'reconnect'];
-        if (statuses.includes(currentStatus)) {
+        if (node.queueuntilconnected) {
+          // keep the msg until the session exists, also if the server is not reachable (e.g. "invalid endpoint");
+          // the liveness check reconnects every reconnect interval. Only the latest msg per action and topic is kept.
+          cmdQueue = cmdQueue.filter(queued => !(queued.action === msg.action && queued.topic === msg.topic));
+          cmdQueue.push(msg);
+        } else if (statuses.includes(currentStatus)) {
           cmdQueue.push(msg);
         } else {
           verbose_warn(`can't work without OPC UA client ${node.client} client ${node.session}`);
