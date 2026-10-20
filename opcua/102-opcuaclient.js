@@ -181,6 +181,43 @@ module.exports = function (RED) {
     // Original subscribe msgs, kept across (re)connects so subscriptions can
     // be replayed automatically after a forced reconnection.
     let autoResubscribe = new Map();
+    // NamespaceArray of the current session, used to resolve NodeIds with namespace URI ("nsu=...")
+    let namespaceArray = null;
+
+    async function read_namespace_array(session) {
+      try {
+        namespaceArray = await session.readNamespaceArray();
+      } catch (err) {
+        namespaceArray = null;
+        node_error("Cannot read NamespaceArray: " + err.message);
+      }
+    }
+
+    // "nsu=<namespace URI>;i=1234" -> "ns=<index>;i=1234" with the NamespaceArray of the current session;
+    // other topics are returned unchanged
+    function resolve_namespace_uri(topic) {
+      if (typeof topic !== "string" || !topic.startsWith("nsu=")) {
+        return topic;
+      }
+      const end = topic.indexOf(";");
+      if (end < 0) {
+        throw new Error("Invalid NodeId " + topic);
+      }
+      const uri = topic.substring(4, end);
+      const index = namespaceArray ? namespaceArray.indexOf(uri) : -1;
+      if (index < 0) {
+        throw new Error("Namespace " + uri + " not found on the server");
+      }
+      return "ns=" + index + topic.substring(end);
+    }
+
+    // copy of msg with resolved topic; the original topic is kept in msg.nsuTopic
+    function resolve_msg_topic(msg) {
+      if (typeof msg.topic !== "string" || !msg.topic.startsWith("nsu=")) {
+        return msg;
+      }
+      return Object.assign({}, msg, { topic: resolve_namespace_uri(msg.topic), nsuTopic: msg.topic });
+    }
 
     // Liveness watchdog: node-opcua's internal keepalive/repair can get stuck
     // (e.g. its state machine wedged in "reconnecting"), in which case a hard
@@ -685,6 +722,8 @@ module.exports = function (RED) {
           close_opcua_client("connection error: no session", 0);
           return;
         }
+        // the namespace indexes can differ after a server restart: read them before the session is used
+        await read_namespace_array(session);
         node.session = session;
         set_node_status_to("session active");
         connectingInFlight = false;
@@ -696,7 +735,11 @@ module.exports = function (RED) {
         if (autoResubscribe.size > 0) {
           verbose_log("Auto re-subscribing " + autoResubscribe.size + " monitored item(s) after (re)connect");
           for (const [, msg] of autoResubscribe) {
-            subscribe_action_input(msg);
+            try {
+              subscribe_action_input(resolve_msg_topic(msg));
+            } catch (err) {
+              node_error("Auto re-subscribe of " + msg.topic + " failed: " + err.message);
+            }
           }
         }
         start_liveness_watchdog();
@@ -851,6 +894,14 @@ module.exports = function (RED) {
         verbose_warn("can't work without OPC UA NodeId - msg.topic must be a string");
         node.send([null, { error: "can't work without OPC UA NodeId as a string", endpoint: `${opcuaEndpoint?.endpoint}`, status: currentStatus }, null]);
         return;
+      } else {
+        try {
+          msg = resolve_msg_topic(msg);
+        } catch (err) {
+          node_error(err.message);
+          node.send([null, { error: err.message, endpoint: `${opcuaEndpoint?.endpoint}`, status: currentStatus }, null]);
+          return;
+        }
       }
 
       verbose_log(chalk.yellow("Action on input: ") + chalk.cyan(node.action) +
@@ -2346,7 +2397,14 @@ module.exports = function (RED) {
           );
           verbose_log("Storing monitoredItem: " + nodeStr + " ItemId: " + monitoredItem.toString());
           monitoredItems.set(itemKey, monitoredItem);
-          autoResubscribe.set(itemKey, msg); // remember for auto re-subscribe after reconnect
+          // remember for auto re-subscribe after reconnect; with the original "nsu=" topic, which is resolved again then
+          if (msg.nsuTopic) {
+            const original = Object.assign({}, msg, { topic: msg.nsuTopic });
+            delete original.nsuTopic;
+            autoResubscribe.set(msg.nsuTopic, original);
+          } else {
+            autoResubscribe.set(itemKey, msg);
+          }
         } catch (err) {
           node_error("Check topic format for nodeId:" + msg.topic)
           node_error('subscription.monitorItem:' + err);
@@ -2367,7 +2425,8 @@ module.exports = function (RED) {
           }
 
           msgToSend.statusCode = dataValue.statusCode;
-          msgToSend.topic = msg.topic;
+          msgToSend.topic = msg.nsuTopic || msg.topic; // topic as subscribed
+          delete msgToSend.nsuTopic;
 
           // Check if timestamps exists otherwise simulate them
           if (dataValue.serverTimestamp != null) {
@@ -2499,7 +2558,8 @@ module.exports = function (RED) {
           }
           let msgToSend = {};
           msgToSend.statusCode = dataValue.statusCode;
-          msgToSend.topic = msg.topic;
+          msgToSend.topic = msg.nsuTopic || msg.topic; // topic as subscribed
+          delete msgToSend.nsuTopic;
 
           // Check if timestamps exists otherwise simulate them
           if (dataValue.serverTimestamp != null) {
@@ -2540,7 +2600,7 @@ module.exports = function (RED) {
         verbose_log("Unsubscribing monitored item: " + msg.topic + " item:" + monitoredItem.toString());
         monitoredItem.terminate();
         monitoredItems.delete(itemKey);
-        autoResubscribe.delete(itemKey); // no auto re-subscribe for intentionally unsubscribed items
+        autoResubscribe.delete(msg.nsuTopic || itemKey); // no auto re-subscribe for intentionally unsubscribed items
       }
       else {
         node_error("NodeId " + nodeStr + " is not subscribed!");
