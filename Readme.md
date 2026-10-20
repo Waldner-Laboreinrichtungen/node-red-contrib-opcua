@@ -1,3 +1,26 @@
+# essentim fork of node-red-contrib-opcua
+
+Fork of [mikakaraila/node-red-contrib-opcua](https://github.com/mikakaraila/node-red-contrib-opcua) with three backward-compatible
+extensions of the OPC UA Client node (defaults behave like the original):
+
+| Extension | Option | Default |
+|---|---|---|
+| DataChangeTrigger for subscriptions (`Status`, `StatusValue`, `StatusValueTimestamp`), e.g. to receive heartbeats with an unchanged value | "Notify on" or `msg.dataChangeTrigger` | server default (`StatusValue`) |
+| Keep messages until connected: messages that arrive without session are kept in every not connected state and processed once connected, so one Inject on start is enough to subscribe | "Keep messages until connected" | off |
+| Reconnect interval of the liveness check | "Reconnect (s)" | 15 s |
+| NodeIds with namespace URI, resolved after every (re)connect, also for the auto re-subscribe | `nsu=<uri>;i=1234` as topic / item | – (additive) |
+
+Install a tagged version from GitHub (no npm registry), in the Node-RED user directory:
+
+```bash
+npm install github:essentim/node-red-contrib-opcua#v0.2.355-essentim.1
+```
+
+The `version` in `package.json` stays the upstream version, so that the palette manager does not offer the upstream release of the
+same version as an update. Do not update this module via the palette manager, it would replace the fork with the original.
+
+---
+
 [![NPM download](https://img.shields.io/npm/dm/node-red-contrib-opcua.svg)](http://www.npm-stats.com/~packages/node-red-contrib-opcua)
 [![NPM version](https://badge.fury.io/js/node-red-contrib-opcua.png)](http://badge.fury.io/js/node-red-contrib-opcua)
 
