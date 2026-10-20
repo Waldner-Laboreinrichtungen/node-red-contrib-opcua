@@ -7,13 +7,13 @@ extensions of the OPC UA Client node (defaults behave like the original):
 |---|---|---|
 | DataChangeTrigger for subscriptions (`Status`, `StatusValue`, `StatusValueTimestamp`), e.g. to receive heartbeats with an unchanged value | "Notify on" or `msg.dataChangeTrigger` | server default (`StatusValue`) |
 | Keep messages until connected: messages that arrive without session are kept in every not connected state and processed once connected, so one Inject on start is enough to subscribe | "Keep messages until connected" | off |
-| Reconnect interval of the liveness check | "Reconnect (s)" | 15 s |
+| Interval of the liveness check, which detects a lost connection (after two failed checks) and reconnects endlessly | "Liveness check (s)" | 15 s |
 | NodeIds with namespace URI, resolved after every (re)connect, also for the auto re-subscribe | `nsu=<uri>;i=1234` as topic / item | – (additive) |
 
 Install a tagged version from GitHub (no npm registry), in the Node-RED user directory:
 
 ```bash
-npm install github:essentim/node-red-contrib-opcua#v0.2.355-essentim.1
+npm install github:essentim/node-red-contrib-opcua#v0.2.355-essentim.2
 ```
 
 The `version` in `package.json` stays the upstream version, so that the palette manager does not offer the upstream release of the

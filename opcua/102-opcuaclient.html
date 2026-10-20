@@ -214,7 +214,7 @@ limitations under the License.
         <input type="checkbox" id="node-input-queueuntilconnected" style="width:20%">
     </div>
     <div class="form-row">
-        <label for="node-input-reconnectinterval"><i class="icon-time"></i> Reconnect (s)</label>
+        <label for="node-input-reconnectinterval"><i class="icon-time"></i> Liveness check (s)</label>
         <input type="number" id="node-input-reconnectinterval" placeholder="15" style="max-width:120px">
     </div>
 
@@ -288,8 +288,9 @@ limitations under the License.
         and processed as soon as the session exists, also if the server is not reachable yet (e.g. status "invalid endpoint").
         Only the latest message per action and topic is kept. This allows e.g. to subscribe once with an Inject node on start,
         even if Node-RED starts before the server. Default: off (messages are only kept while connecting).</p>
-    <p><strong>Reconnect (s)</strong>: interval of the liveness check, which reconnects endlessly while the server is not
-        reachable (default: 15 s).</p>
+    <p><strong>Liveness check (s)</strong>: interval of the liveness check (default: 15 s). A lost connection is detected
+        after two failed checks (2 to 3 intervals); while the server is not reachable, a reconnect is attempted every interval, endlessly.
+        A longer interval therefore also delays the detection of a lost connection.</p>
     <p>Interval is setting for Client <strong>requestedPublishingInterval</strong> (default: 100ms).</p>
     <p>Input <strong>msg.payload</strong> can bring an samplingInterval for monitored Items/Events in subscription (default: 100ms).</p>
     <p>Monitor will ask additional parameters like Absolute or Percent and deadband value</p>
