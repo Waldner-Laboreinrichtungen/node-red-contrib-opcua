@@ -1,7 +1,7 @@
 # essentim fork of node-red-contrib-opcua
 
-Fork of [mikakaraila/node-red-contrib-opcua](https://github.com/mikakaraila/node-red-contrib-opcua) with three backward-compatible
-extensions of the OPC UA Client node (defaults behave like the original):
+Fork of [mikakaraila/node-red-contrib-opcua](https://github.com/mikakaraila/node-red-contrib-opcua) with backward-compatible
+extensions of the OPC UA Client and Item nodes (defaults behave like the original):
 
 | Extension | Option | Default |
 |---|---|---|
@@ -9,6 +9,7 @@ extensions of the OPC UA Client node (defaults behave like the original):
 | Keep messages until connected: messages that arrive without session are kept in every not connected state and processed once connected, so one Inject on start is enough to subscribe | "Keep messages until connected" | off |
 | Interval of the liveness check, which detects a lost connection (after two failed checks) and reconnects endlessly | "Liveness check (s)" | 15 s |
 | NodeIds with namespace URI, resolved after every (re)connect, also for the auto re-subscribe | `nsu=<uri>;i=1234` as topic / item | – (additive) |
+| Item: value and status code of the last message in the node status (e.g. `12.5 · Good · 11:20:43`), colour by severity; the status code is `msg.statusCode` as written with "set status and time" | "Show value and status code" | off |
 
 Install a tagged version from GitHub (no npm registry), in the Node-RED user directory:
 

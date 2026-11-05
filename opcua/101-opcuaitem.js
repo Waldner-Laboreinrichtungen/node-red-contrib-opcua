@@ -29,6 +29,7 @@ module.exports = function (RED) {
         this.item = n.item; // OPC UA address: ns=2;i=4 OR ns=3;s=MyVariable
         this.datatype = n.datatype.replace(/\s/g, ""); // String; need to remove white space from node datatype to be consistent with inputs, i.e. ExtensionObject
         this.value = n.value; // 66.6
+        this.showstatus = n.showstatus === true; // essentim fork: value and status code in the node status
         this.name = n.name; // browseName shall be put here
 
         var node = this;
@@ -37,6 +38,23 @@ module.exports = function (RED) {
             //if (RED.settings.verbose) {
                 node.warn((node.name) ? node.name + ': ' + logMessage : 'OpcUaClientNode: ' + logMessage);
             //}
+        }
+
+        // essentim fork: "<value> · <status code> · <time>", colour by severity (Good, Uncertain, Bad)
+        function show_value_and_status(msg) {
+            if (msg.payload === undefined || msg.payload === null || msg.payload === "") {
+                return; // e.g. the trigger of a subscribe or read
+            }
+            var statusCode = opcua.coerceStatusCode(msg.statusCode || 0);
+            var value = msg.payload;
+            if (typeof value === "number" && !Number.isInteger(value)) {
+                value = +value.toFixed(3);
+            } else if (typeof value === "object") {
+                value = JSON.stringify(value);
+            }
+            var text = String(value).substring(0, 32) + " · " + statusCode.name + " · " + new Date().toTimeString().substring(0, 8); // HH:MM:SS
+            var fill = ["green", "yellow", "red", "red"][statusCode.value >>> 30];
+            node.status({ fill: fill, shape: "dot", text: text });
         }
 
         function verbose_log(logMessage) {
@@ -73,6 +91,9 @@ module.exports = function (RED) {
                     msg.payload = opcuaBasics.build_new_value_by_datatype(msg.datatype, msg.payload);
                 }
                 // verbose_warn("Payload value, setting value to " + stringify(msg));
+            }
+            if (node.showstatus) {
+                show_value_and_status(msg);
             }
             node.send(msg);
         });

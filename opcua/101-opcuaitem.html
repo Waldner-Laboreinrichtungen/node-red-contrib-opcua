@@ -24,6 +24,7 @@ limitations under the License.
             item: {value: "", required: true},
             datatype: {value: "", required: true},
             value: {value: null},
+            showstatus: {value: false},
             name: {value: ""}
         },
         inputs:1,
@@ -86,6 +87,10 @@ limitations under the License.
         <input type="text" id="node-input-value" placeholder="">
     </div>
     <div class="form-row">
+        <label for="node-input-showstatus" style="width:72%;"><i class="icon-tasks"></i> Show value and status code</label>
+        <input type="checkbox" id="node-input-showstatus" style="width:20%">
+    </div>
+    <div class="form-row">
         <label for="node-input-name"><i class="icon-tag"></i> Name</label>
         <input type="text" id="node-input-name" placeholder="">
     </div>
@@ -103,4 +108,8 @@ limitations under the License.
     <p>5,4,3,2,1</p>
     <p><strong>NOTE:</strong> Item value can be used as initial value when msg.payload is empty.</p>
     <p>      Otherwise msg.payload is used to set value.</p>
+    <p><strong>Show value and status code:</strong> shows the value of every message with a payload and its
+       <strong>msg.statusCode</strong> (as written by an OPC UA Client with "set status and time"; no status code = Good)
+       and the time in the node status, e.g. <code>12.5 · Good · 11:20:43</code>. The colour follows the severity of the
+       status code: green = Good, yellow = Uncertain, red = Bad. Off by default.</p>
 </script>
