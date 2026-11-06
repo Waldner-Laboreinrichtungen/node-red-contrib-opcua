@@ -4,7 +4,7 @@
   "description": "A Node-RED node to communicate via OPC UA based on node-opcua library (essentim fork: DataChangeTrigger, keep messages until connected, nsu NodeIds).",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/essentim/node-red-contrib-opcua.git"
+    "url": "git+https://github.com/Waldner-Laboreinrichtungen/node-red-contrib-opcua.git"
   },
   "keywords": [
     "node-red",

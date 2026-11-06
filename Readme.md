@@ -14,7 +14,7 @@ extensions of the OPC UA Client and Item nodes (defaults behave like the origina
 Install a tagged version from GitHub (no npm registry), in the Node-RED user directory:
 
 ```bash
-npm install github:essentim/node-red-contrib-opcua#v0.2.355-essentim.2
+npm install github:Waldner-Laboreinrichtungen/node-red-contrib-opcua#v0.2.355-essentim.3
 ```
 
 The `version` in `package.json` stays the upstream version, so that the palette manager does not offer the upstream release of the
